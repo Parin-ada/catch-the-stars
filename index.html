@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>จับดาวให้ได้!</title>
+
   <style>
     * { box-sizing: border-box; }
 
@@ -56,8 +57,21 @@
       transition: transform 0.12s, filter 0.12s;
     }
 
-    button:hover { filter: brightness(1.04); transform: translateY(-1px); }
-    button:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; }
+    button:hover:not(:disabled) {
+      filter: brightness(1.04);
+      transform: translateY(-1px);
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid #ffbf47;
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
 
     #tutorialButton {
       padding: 9px 13px;
@@ -70,9 +84,34 @@
       background: #6a50cc;
     }
 
-    #startButton:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
+    .settings {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .setting-field {
+      display: grid;
+      gap: 5px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .setting-field input {
+      width: 170px;
+      padding: 9px 10px;
+      border: 2px solid #ded9f5;
+      border-radius: 10px;
+      color: #27335b;
+      font: inherit;
+    }
+
+    .setting-field input:disabled {
+      background: #f1f1f5;
+      color: #777;
     }
 
     #message {
@@ -111,7 +150,7 @@
       to { transform: scale(1); }
     }
 
-    /* หน้าต่าง tutorial */
+    /* หน้าต่าง Tutorial */
     .modal {
       position: fixed;
       inset: 0;
@@ -141,7 +180,10 @@
       text-align: center;
     }
 
-    .modal-card li { margin: 10px 0; line-height: 1.5; }
+    .modal-card li {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
 
     #closeTutorial {
       display: block;
@@ -160,7 +202,7 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* ตัวอย่างการเล่นในหน้าสอน */
+    /* ตัวอย่างแอนิเมชันใน Tutorial */
     .tutorial-demo {
       position: relative;
       height: 105px;
@@ -310,6 +352,7 @@
       body { padding: 12px; }
       .game { padding: 18px 14px; }
       #arena { height: 300px; }
+      .setting-field input { width: 150px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -321,19 +364,51 @@
     }
   </style>
 </head>
+
 <body>
   <main class="game">
     <h1>⭐ จับดาวให้ได้! ⭐</h1>
-    <p class="subtitle">ตามหาดาวให้ทันก่อนหมดเวลา</p>
+    <p class="subtitle">ตั้งเวลาและเป้าหมาย แล้วมาสะสมดาวกัน</p>
 
     <div class="top-bar">
       <div class="stat">คะแนน: <span id="score">0</span></div>
       <div class="stat">เวลา: <span id="time">30</span> วินาที</div>
-      <button id="tutorialButton" type="button" aria-label="ดูวิธีเล่น" title="วิธีเล่น">💡</button>
+      <button
+        id="tutorialButton"
+        type="button"
+        aria-label="ดูวิธีเล่น"
+        title="วิธีเล่น"
+      >💡</button>
+    </div>
+
+    <div class="settings">
+      <label class="setting-field" for="timeSetting">
+        เวลาเล่น (วินาที)
+        <input
+          id="timeSetting"
+          type="number"
+          min="5"
+          max="300"
+          step="1"
+          value="30"
+        />
+      </label>
+
+      <label class="setting-field" for="targetSetting">
+        เป้าหมายดาว (ดวง)
+        <input
+          id="targetSetting"
+          type="number"
+          min="1"
+          max="999"
+          step="1"
+          value="20"
+        />
+      </label>
     </div>
 
     <button id="startButton" type="button">เริ่มเล่น</button>
-    <p id="message" aria-live="polite">กด “เริ่มเล่น” เพื่อเริ่มเกม</p>
+    <p id="message" aria-live="polite">ตั้งค่าแล้วกด “เริ่มเล่น” ได้เลย</p>
 
     <section id="arena" aria-label="พื้นที่เล่นเกม">
       <button id="star" type="button" aria-label="จับดาว">⭐</button>
@@ -348,23 +423,30 @@
     </section>
   </main>
 
-  <div id="tutorialModal" class="modal" role="dialog" aria-modal="true"
-       aria-labelledby="tutorialTitle" hidden>
+  <div
+    id="tutorialModal"
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="tutorialTitle"
+    hidden
+  >
     <div class="modal-card">
       <h2 id="tutorialTitle">💡 วิธีเล่น</h2>
       <ol>
+        <li>กำหนดเวลาเล่นและจำนวนดาวเป้าหมาย</li>
         <li>กดปุ่ม <strong>เริ่มเล่น</strong></li>
-        <li>กดที่ดาว ⭐ ในพื้นที่เล่นเพื่อเก็บคะแนน</li>
-        <li>ดาวจะย้ายที่ทุกครั้งที่กด ลองดูตัวอย่างด้านล่าง!</li>
-        <li>เก็บดาวให้ได้อย่างน้อย 20 ดวงใน 30 วินาทีเพื่อชนะ</li>
+        <li>แตะดาว ⭐ เพื่อเพิ่มคะแนน ดาวจะย้ายตำแหน่งทุกครั้ง</li>
+        <li>เก็บดาวให้ครบตามเป้าหมายก่อนหมดเวลาเพื่อชนะ</li>
       </ol>
 
-      <div class="tutorial-demo" aria-label="ตัวอย่างการกดดาวเพื่อเพิ่มคะแนน">
+      <div class="tutorial-demo" aria-label="ตัวอย่างการแตะดาวเพื่อเพิ่มคะแนน">
         <span class="demo-star" aria-hidden="true">⭐</span>
         <span class="demo-pointer" aria-hidden="true">👆</span>
         <span class="demo-score">คะแนน +1</span>
       </div>
-      <p style="text-align:center; margin: 8px 0 0; color:#65708b;">
+
+      <p style="text-align:center; margin:8px 0 0; color:#65708b;">
         แตะดาว → ได้คะแนน → ดาวย้ายตำแหน่ง
       </p>
 
@@ -379,6 +461,8 @@
     const arena = document.getElementById("arena");
     const star = document.getElementById("star");
     const startButton = document.getElementById("startButton");
+    const timeSetting = document.getElementById("timeSetting");
+    const targetSetting = document.getElementById("targetSetting");
     const tutorialButton = document.getElementById("tutorialButton");
     const tutorialModal = document.getElementById("tutorialModal");
     const closeTutorial = document.getElementById("closeTutorial");
@@ -387,86 +471,136 @@
     const endTitle = document.getElementById("endTitle");
     const endText = document.getElementById("endText");
 
-    const WIN_SCORE = 20;
     let score = 0;
     let timeLeft = 30;
+    let targetScore = 20;
     let timer = null;
     let isPlaying = false;
 
     function moveStar() {
       const maxX = arena.clientWidth - star.offsetWidth;
       const maxY = arena.clientHeight - star.offsetHeight;
+
       star.style.left = Math.random() * Math.max(0, maxX) + "px";
       star.style.top = Math.random() * Math.max(0, maxY) + "px";
     }
 
     function showConfetti() {
-      const confettiSymbols = ["🎉", "✨", "🎊", "⭐"];
+      const symbols = ["🎉", "✨", "🎊", "⭐"];
+
       for (let i = 0; i < 24; i += 1) {
         const piece = document.createElement("span");
         piece.className = "confetti";
-        piece.textContent = confettiSymbols[i % confettiSymbols.length];
+        piece.textContent = symbols[i % symbols.length];
         piece.style.left = Math.random() * 95 + "%";
         piece.style.animationDelay = Math.random() * 0.7 + "s";
+
         arena.appendChild(piece);
         piece.addEventListener("animationend", () => piece.remove(), { once: true });
       }
     }
 
     function endGame() {
+      if (!isPlaying) return;
+
       isPlaying = false;
       clearInterval(timer);
       star.style.display = "none";
+
       startButton.disabled = false;
       startButton.textContent = "เล่นอีกครั้ง";
+      timeSetting.disabled = false;
+      targetSetting.disabled = false;
 
       endOverlay.hidden = false;
       endOverlay.classList.remove("win", "lose");
 
-      if (score >= WIN_SCORE) {
+      if (score >= targetScore) {
         endOverlay.classList.add("win");
         endIcon.textContent = "🏆";
         endTitle.textContent = "ชนะแล้ว!";
-        endText.textContent = `สุดยอดเลย! เก็บดาวได้ ${score} ดวง`;
+        endText.textContent =
+          `สุดยอดเลย! เก็บดาวได้ ${score} จากเป้าหมาย ${targetScore} ดวง`;
         message.textContent = "เก่งมาก! คุณชนะแล้ว!";
         showConfetti();
       } else {
         endOverlay.classList.add("lose");
         endIcon.textContent = "💪";
         endTitle.textContent = "พยายามอีกนิด!";
-        endText.textContent = `เก็บดาวได้ ${score} ดวง ลองอีกครั้งเพื่อให้ถึง ${WIN_SCORE} ดวงนะ`;
+        endText.textContent =
+          `เก็บดาวได้ ${score} ดวง ยังไม่ครบ ${targetScore} ดวง ลองอีกครั้งนะ`;
         message.textContent = "หมดเวลาแล้ว ลองใหม่ได้เลย!";
       }
     }
 
     function startGame() {
       clearInterval(timer);
+
+      const selectedTime = Number(timeSetting.value);
+      const selectedTarget = Number(targetSetting.value);
+
+      if (
+        !Number.isInteger(selectedTime) ||
+        selectedTime < 5 ||
+        selectedTime > 300
+      ) {
+        message.textContent = "ตั้งเวลาได้ตั้งแต่ 5 ถึง 300 วินาที";
+        timeSetting.focus();
+        return;
+      }
+
+      if (
+        !Number.isInteger(selectedTarget) ||
+        selectedTarget < 1 ||
+        selectedTarget > 999
+      ) {
+        message.textContent = "ตั้งเป้าหมายได้ตั้งแต่ 1 ถึง 999 ดวง";
+        targetSetting.focus();
+        return;
+      }
+
       document.querySelectorAll(".confetti").forEach((piece) => piece.remove());
 
       score = 0;
-      timeLeft = 30;
+      timeLeft = selectedTime;
+      targetScore = selectedTarget;
       isPlaying = true;
 
       scoreDisplay.textContent = score;
       timeDisplay.textContent = timeLeft;
-      message.textContent = "เยี่ยมเลย! กดดาวให้เร็วที่สุด";
+      message.textContent = `เก็บดาวให้ครบ ${targetScore} ดวงก่อนหมดเวลา!`;
+
       startButton.disabled = true;
+      timeSetting.disabled = true;
+      targetSetting.disabled = true;
+
       endOverlay.hidden = true;
       endOverlay.classList.remove("win", "lose");
+
       star.style.display = "block";
       moveStar();
 
       timer = setInterval(() => {
         timeLeft -= 1;
         timeDisplay.textContent = timeLeft;
-        if (timeLeft <= 0) endGame();
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
       }, 1000);
     }
 
     star.addEventListener("click", () => {
       if (!isPlaying) return;
+
       score += 1;
       scoreDisplay.textContent = score;
+
+      if (score >= targetScore) {
+        endGame();
+        return;
+      }
+
       moveStar();
     });
 
@@ -485,7 +619,9 @@
     closeTutorial.addEventListener("click", closeTutorialModal);
 
     tutorialModal.addEventListener("click", (event) => {
-      if (event.target === tutorialModal) closeTutorialModal();
+      if (event.target === tutorialModal) {
+        closeTutorialModal();
+      }
     });
 
     document.addEventListener("keydown", (event) => {
