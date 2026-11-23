@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>จับดาวให้ได้!</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+      font-family: system-ui, sans-serif;
+      color: #27335b;
+      background: linear-gradient(135deg, #dff6ff, #f9e8ff);
+    }
+
+    .game {
+      width: min(100%, 640px);
+      padding: 24px;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow: 0 12px 35px #52628b2b;
+      text-align: center;
+    }
+
+    h1 { margin: 0 0 8px; color: #5841a8; }
+    .subtitle { margin: 0 0 18px; color: #65708b; }
+
+    .top-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      padding: 9px 16px;
+      border-radius: 14px;
+      background: #f1efff;
+      font-weight: 700;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s, filter 0.12s;
+    }
+
+    button:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    button:focus-visible { outline: 3px solid #ffbf47; outline-offset: 3px; }
+
+    #tutorialButton {
+      padding: 9px 13px;
+      background: #fff3c4;
+      font-size: 22px;
+    }
+
+    #startButton {
+      color: #fff;
+      background: #6a50cc;
+    }
+
+    #startButton:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    #message {
+      min-height: 28px;
+      margin: 12px 0;
+      font-weight: 700;
+    }
+
+    #arena {
+      position: relative;
+      height: 330px;
+      overflow: hidden;
+      border: 3px dashed #c9c0f6;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #f5f2ff, #e9faff);
+    }
+
+    #star {
+      position: absolute;
+      display: none;
+      width: 64px;
+      height: 64px;
+      padding: 0;
+      border-radius: 50%;
+      background: transparent;
+      font-size: 48px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+      animation: pop 0.25s ease-out;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.5); }
+      to { transform: scale(1); }
+    }
+
+    /* หน้าต่าง tutorial */
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: #20274699;
+      animation: fade-in 0.2s ease-out;
+    }
+
+    .modal[hidden] { display: none; }
+
+    .modal-card {
+      width: min(100%, 440px);
+      padding: 24px;
+      border-radius: 20px;
+      background: #fff;
+      text-align: left;
+      box-shadow: 0 16px 40px #0003;
+      animation: card-in 0.35s ease-out;
+    }
+
+    .modal-card h2 {
+      margin-top: 0;
+      color: #5841a8;
+      text-align: center;
+    }
+
+    .modal-card li { margin: 10px 0; line-height: 1.5; }
+
+    #closeTutorial {
+      display: block;
+      margin: 18px auto 0;
+      color: #fff;
+      background: #6a50cc;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ตัวอย่างการเล่นในหน้าสอน */
+    .tutorial-demo {
+      position: relative;
+      height: 105px;
+      margin: 16px 0 10px;
+      overflow: hidden;
+      border: 2px dashed #c9c0f6;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #f5f2ff, #e9faff);
+    }
+
+    .demo-star {
+      position: absolute;
+      top: 25px;
+      left: 12%;
+      font-size: 38px;
+      animation: demo-move 3.2s ease-in-out infinite;
+    }
+
+    .demo-pointer {
+      position: absolute;
+      top: 57px;
+      left: 17%;
+      font-size: 25px;
+      animation: pointer-move 3.2s ease-in-out infinite;
+    }
+
+    .demo-score {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      padding: 4px 9px;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      animation: score-pop 3.2s ease-in-out infinite;
+    }
+
+    @keyframes demo-move {
+      0%, 10% { left: 12%; transform: scale(1); }
+      35% { left: 12%; transform: scale(1.25); }
+      55%, 70% { left: 72%; transform: scale(1); }
+      90%, 100% { left: 12%; transform: scale(1); }
+    }
+
+    @keyframes pointer-move {
+      0%, 15% { left: 17%; top: 57px; transform: scale(1); }
+      28% { left: 17%; top: 45px; transform: scale(0.8); }
+      38% { left: 17%; top: 57px; transform: scale(1); }
+      58%, 72% { left: 77%; top: 57px; transform: scale(1); }
+      83% { left: 77%; top: 45px; transform: scale(0.8); }
+      93%, 100% { left: 77%; top: 57px; transform: scale(1); }
+    }
+
+    @keyframes score-pop {
+      0%, 32%, 55%, 82%, 100% { transform: scale(1); }
+      40%, 90% { transform: scale(1.2); color: #6a50cc; }
+    }
+
+    /* หน้าจบเกม */
+    .end-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: #ffffffd9;
+      text-align: center;
+    }
+
+    .end-overlay[hidden] { display: none; }
+
+    .end-card {
+      width: min(100%, 340px);
+      padding: 20px;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 8px 25px #52628b30;
+      animation: end-pop 0.55s cubic-bezier(.2, 1.5, .5, 1);
+    }
+
+    .end-icon {
+      display: block;
+      font-size: 58px;
+      line-height: 1.2;
+    }
+
+    .end-title {
+      margin: 8px 0;
+      color: #5841a8;
+      font-size: 26px;
+    }
+
+    .end-text { margin: 0; }
+
+    .end-overlay.win .end-icon {
+      animation: win-bounce 0.8s ease-in-out infinite alternate;
+    }
+
+    .end-overlay.lose .end-card {
+      animation: lose-shake 0.45s ease-in-out;
+    }
+
+    .end-overlay.lose .end-icon {
+      animation: lose-drop 0.7s ease-out;
+    }
+
+    .confetti {
+      position: absolute;
+      top: -20px;
+      z-index: 3;
+      pointer-events: none;
+      font-size: 22px;
+      animation: confetti-fall 1.8s ease-in forwards;
+    }
+
+    @keyframes end-pop {
+      from { opacity: 0; transform: scale(0.65); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes win-bounce {
+      from { transform: translateY(0) rotate(-8deg); }
+      to { transform: translateY(-12px) rotate(8deg); }
+    }
+
+    @keyframes lose-shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+
+    @keyframes lose-drop {
+      from { transform: translateY(-24px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes confetti-fall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(390px) rotate(540deg); opacity: 0; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      .game { padding: 18px 14px; }
+      #arena { height: 300px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>⭐ จับดาวให้ได้! ⭐</h1>
+    <p class="subtitle">ตามหาดาวให้ทันก่อนหมดเวลา</p>
+
+    <div class="top-bar">
+      <div class="stat">คะแนน: <span id="score">0</span></div>
+      <div class="stat">เวลา: <span id="time">30</span> วินาที</div>
+      <button id="tutorialButton" type="button" aria-label="ดูวิธีเล่น" title="วิธีเล่น">💡</button>
+    </div>
+
+    <button id="startButton" type="button">เริ่มเล่น</button>
+    <p id="message" aria-live="polite">กด “เริ่มเล่น” เพื่อเริ่มเกม</p>
+
+    <section id="arena" aria-label="พื้นที่เล่นเกม">
+      <button id="star" type="button" aria-label="จับดาว">⭐</button>
+
+      <div id="endOverlay" class="end-overlay" hidden>
+        <div class="end-card">
+          <span id="endIcon" class="end-icon" aria-hidden="true"></span>
+          <h2 id="endTitle" class="end-title"></h2>
+          <p id="endText" class="end-text"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="tutorialModal" class="modal" role="dialog" aria-modal="true"
+       aria-labelledby="tutorialTitle" hidden>
+    <div class="modal-card">
+      <h2 id="tutorialTitle">💡 วิธีเล่น</h2>
+      <ol>
+        <li>กดปุ่ม <strong>เริ่มเล่น</strong></li>
+        <li>กดที่ดาว ⭐ ในพื้นที่เล่นเพื่อเก็บคะแนน</li>
+        <li>ดาวจะย้ายที่ทุกครั้งที่กด ลองดูตัวอย่างด้านล่าง!</li>
+        <li>เก็บดาวให้ได้อย่างน้อย 20 ดวงใน 30 วินาทีเพื่อชนะ</li>
+      </ol>
+
+      <div class="tutorial-demo" aria-label="ตัวอย่างการกดดาวเพื่อเพิ่มคะแนน">
+        <span class="demo-star" aria-hidden="true">⭐</span>
+        <span class="demo-pointer" aria-hidden="true">👆</span>
+        <span class="demo-score">คะแนน +1</span>
+      </div>
+      <p style="text-align:center; margin: 8px 0 0; color:#65708b;">
+        แตะดาว → ได้คะแนน → ดาวย้ายตำแหน่ง
+      </p>
+
+      <button id="closeTutorial" type="button">เข้าใจแล้ว</button>
+    </div>
+  </div>
+
+  <script>
+    const scoreDisplay = document.getElementById("score");
+    const timeDisplay = document.getElementById("time");
+    const message = document.getElementById("message");
+    const arena = document.getElementById("arena");
+    const star = document.getElementById("star");
+    const startButton = document.getElementById("startButton");
+    const tutorialButton = document.getElementById("tutorialButton");
+    const tutorialModal = document.getElementById("tutorialModal");
+    const closeTutorial = document.getElementById("closeTutorial");
+    const endOverlay = document.getElementById("endOverlay");
+    const endIcon = document.getElementById("endIcon");
+    const endTitle = document.getElementById("endTitle");
+    const endText = document.getElementById("endText");
+
+    const WIN_SCORE = 20;
+    let score = 0;
+    let timeLeft = 30;
+    let timer = null;
+    let isPlaying = false;
+
+    function moveStar() {
+      const maxX = arena.clientWidth - star.offsetWidth;
+      const maxY = arena.clientHeight - star.offsetHeight;
+      star.style.left = Math.random() * Math.max(0, maxX) + "px";
+      star.style.top = Math.random() * Math.max(0, maxY) + "px";
+    }
+
+    function showConfetti() {
+      const confettiSymbols = ["🎉", "✨", "🎊", "⭐"];
+      for (let i = 0; i < 24; i += 1) {
+        const piece = document.createElement("span");
+        piece.className = "confetti";
+        piece.textContent = confettiSymbols[i % confettiSymbols.length];
+        piece.style.left = Math.random() * 95 + "%";
+        piece.style.animationDelay = Math.random() * 0.7 + "s";
+        arena.appendChild(piece);
+        piece.addEventListener("animationend", () => piece.remove(), { once: true });
+      }
+    }
+
+    function endGame() {
+      isPlaying = false;
+      clearInterval(timer);
+      star.style.display = "none";
+      startButton.disabled = false;
+      startButton.textContent = "เล่นอีกครั้ง";
+
+      endOverlay.hidden = false;
+      endOverlay.classList.remove("win", "lose");
+
+      if (score >= WIN_SCORE) {
+        endOverlay.classList.add("win");
+        endIcon.textContent = "🏆";
+        endTitle.textContent = "ชนะแล้ว!";
+        endText.textContent = `สุดยอดเลย! เก็บดาวได้ ${score} ดวง`;
+        message.textContent = "เก่งมาก! คุณชนะแล้ว!";
+        showConfetti();
+      } else {
+        endOverlay.classList.add("lose");
+        endIcon.textContent = "💪";
+        endTitle.textContent = "พยายามอีกนิด!";
+        endText.textContent = `เก็บดาวได้ ${score} ดวง ลองอีกครั้งเพื่อให้ถึง ${WIN_SCORE} ดวงนะ`;
+        message.textContent = "หมดเวลาแล้ว ลองใหม่ได้เลย!";
+      }
+    }
+
+    function startGame() {
+      clearInterval(timer);
+      document.querySelectorAll(".confetti").forEach((piece) => piece.remove());
+
+      score = 0;
+      timeLeft = 30;
+      isPlaying = true;
+
+      scoreDisplay.textContent = score;
+      timeDisplay.textContent = timeLeft;
+      message.textContent = "เยี่ยมเลย! กดดาวให้เร็วที่สุด";
+      startButton.disabled = true;
+      endOverlay.hidden = true;
+      endOverlay.classList.remove("win", "lose");
+      star.style.display = "block";
+      moveStar();
+
+      timer = setInterval(() => {
+        timeLeft -= 1;
+        timeDisplay.textContent = timeLeft;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    star.addEventListener("click", () => {
+      if (!isPlaying) return;
+      score += 1;
+      scoreDisplay.textContent = score;
+      moveStar();
+    });
+
+    startButton.addEventListener("click", startGame);
+
+    tutorialButton.addEventListener("click", () => {
+      tutorialModal.hidden = false;
+      closeTutorial.focus();
+    });
+
+    function closeTutorialModal() {
+      tutorialModal.hidden = true;
+      tutorialButton.focus();
+    }
+
+    closeTutorial.addEventListener("click", closeTutorialModal);
+
+    tutorialModal.addEventListener("click", (event) => {
+      if (event.target === tutorialModal) closeTutorialModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !tutorialModal.hidden) {
+        closeTutorialModal();
+      }
+    });
+  </script>
+</body>
+</html>
